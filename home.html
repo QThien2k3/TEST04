@@ -1,0 +1,1470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Smart Home Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-color: #4ade80;
+            --warning-color: #fbbf24;
+            --danger-color: #ef4444;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f1e;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: linear-gradient(45deg, #0f0f1e, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Particle Effect */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 20s linear infinite;
+        }
+        
+        @keyframes float {
+            from {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-10vh) translateX(100px);
+                opacity: 0;
+            }
+        }
+        
+        /* Main Container */
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite;
+        }
+        
+        @keyframes glow {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(102, 126, 234, 0.5)); }
+            50% { filter: brightness(1.2) drop-shadow(0 0 30px rgba(102, 126, 234, 0.8)); }
+        }
+        
+        .datetime {
+            font-size: 1.2em;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        /* Glass Card Effect */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            transform: rotate(45deg);
+            pointer-events: none;
+        }
+        
+        /* Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .weather-energy-section {
+            display: grid;
+            gap: 30px;
+        }
+        
+        .rooms-section {
+            display: grid;
+            gap: 30px;
+        }
+        
+        /* Weather Card */
+        .weather-card {
+            background: var(--primary-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .weather-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .weather-main {
+            text-align: center;
+        }
+        
+        .weather-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+        }
+        
+        .weather-temp {
+            font-size: 4em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .weather-details {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .weather-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .weather-detail-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        /* Energy Flow Visualization */
+        .energy-flow-container {
+            height: 500px;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        }
+        
+        .energy-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Room Cards */
+        .room-card {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        
+        .room-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .room-title {
+            font-size: 1.8em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .room-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-gradient);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .room-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .control-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .control-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(74, 222, 128, 0.3) 0%, transparent 70%);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .control-button.active::before {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .control-button.active {
+            background: rgba(74, 222, 128, 0.2);
+            border-color: var(--success-color);
+        }
+        
+        .control-icon {
+            font-size: 2em;
+            transition: all 0.3s ease;
+        }
+        
+        .control-button.active .control-icon {
+            color: var(--success-color);
+            filter: drop-shadow(0 0 10px rgba(74, 222, 128, 0.5));
+        }
+        
+        /* Sensor Display */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .sensor-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .sensor-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--success-color);
+            margin: 10px 0;
+        }
+        
+        .sensor-label {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+        
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .chart-card {
+            height: 300px;
+            position: relative;
+        }
+        
+        .chart-canvas {
+            width: 100% !important;
+            height: 250px !important;
+        }
+        
+        /* Energy Stats */
+        .energy-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .energy-stat {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .energy-stat::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-gradient);
+        }
+        
+        .energy-percentage {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .energy-label {
+            opacity: 0.8;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 300px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--success-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .weather-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .room-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .energy-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-gradient);
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation"></div>
+    <div class="particles" id="particles"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div class="notification-header">
+            <div class="notification-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div>
+                <h4 id="notificationTitle">Thông báo</h4>
+                <p id="notificationMessage">Hệ thống đang hoạt động bình thường</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard -->
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-home"></i> ECO_HOME</h1>
+            <div class="datetime">
+                <span><i class="far fa-calendar"></i> <span id="currentDate"></span></span>
+                <span><i class="far fa-clock"></i> <span id="currentTime"></span></span>
+            </div>
+        </div>
+        
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Weather & Energy Section -->
+            <div class="weather-energy-section">
+                <!-- Weather Card -->
+                <div class="glass-card weather-card">
+                    <h2 style="margin-bottom: 20px;"><i class="fas fa-cloud-sun"></i> Thời Tiết Hà Nội</h2>
+                    <div class="weather-content">
+                        <div class="weather-main">
+                            <div class="weather-icon" id="weatherIcon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="weather-temp" id="weatherTemp">--°C</div>
+                            <p id="weatherDesc">Đang tải...</p>
+                        </div>
+                        <div class="weather-details">
+                            <div class="weather-detail-item">
+                                <i class="fas fa-tint"></i>
+                                <span>Độ ẩm: <strong id="weatherHumidity">--%</strong></span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <i class="fas fa-wind"></i>
+                                <span>Gió: <strong id="weatherWind">-- km/h</strong></span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <i class="fas fa-cloud-rain"></i>
+                                <span>Mưa: <strong id="weatherRain">-- mm</strong></span>
+                            </div>
+                            <div class="weather-detail-item">
+                                <i class="fas fa-eye"></i>
+                                <span>Tầm nhìn: <strong id="weatherVisibility">-- km</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Energy Flow Visualization -->
+                <div class="glass-card">
+                    <h2 style="margin-bottom: 20px;"><i class="fas fa-bolt"></i> Luồng Năng Lượng</h2>
+                    <div class="energy-flow-container">
+                        <canvas id="energyCanvas" class="energy-canvas"></canvas>
+                    </div>
+                    <div class="energy-stats">
+                        <div class="energy-stat">
+                            <div class="energy-percentage" id="solarPercent">0%</div>
+                            <div class="energy-label">Mặt Trời</div>
+                        </div>
+                        <div class="energy-stat">
+                            <div class="energy-percentage" id="batteryPercent">0%</div>
+                            <div class="energy-label">Pin LiPo</div>
+                        </div>
+                        <div class="energy-stat">
+                            <div class="energy-percentage" id="adapterPercent">0%</div>
+                            <div class="energy-label">Adapter</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rooms Section -->
+            <div class="rooms-section">
+                <!-- Living Room -->
+                <div class="room-card">
+                    <div class="room-header">
+                        <div class="room-title">
+                            <div class="room-icon">
+                                <i class="fas fa-couch"></i>
+                            </div>
+                            <span>Phòng Khách</span>
+                        </div>
+                    </div>
+                    <div class="room-controls">
+                        <button class="control-button" id="light1Btn" onclick="toggleDevice('light1')">
+                            <i class="fas fa-lightbulb control-icon"></i>
+                            <span>Đèn</span>
+                        </button>
+                        <button class="control-button" id="fan1Btn" onclick="toggleDevice('fan1')">
+                            <i class="fas fa-fan control-icon"></i>
+                            <span>Quạt</span>
+                        </button>
+                    </div>
+                    <div class="sensor-grid">
+                        <div class="sensor-item">
+                            <i class="fas fa-thermometer-half" style="font-size: 2em; color: #ef4444;"></i>
+                            <div class="sensor-value" id="tempValue">--</div>
+                            <div class="sensor-label">Nhiệt độ (°C)</div>
+                        </div>
+                        <div class="sensor-item">
+                            <i class="fas fa-tint" style="font-size: 2em; color: #3b82f6;"></i>
+                            <div class="sensor-value" id="humidValue">--</div>
+                            <div class="sensor-label">Độ ẩm (%)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kitchen -->
+                <div class="room-card">
+                    <div class="room-header">
+                        <div class="room-title">
+                            <div class="room-icon">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <span>Phòng Bếp</span>
+                        </div>
+                    </div>
+                    <div class="room-controls">
+                        <button class="control-button" id="light3Btn" onclick="toggleDevice('light3')">
+                            <i class="fas fa-lightbulb control-icon"></i>
+                            <span>Đèn</span>
+                        </button>
+                        <button class="control-button" id="fan3Btn" onclick="toggleDevice('fan3')">
+                            <i class="fas fa-fan control-icon"></i>
+                            <span>Quạt</span>
+                        </button>
+                    </div>
+                    <div class="sensor-grid">
+                        <div class="sensor-item" style="grid-column: span 2;">
+                            <i class="fas fa-fire" style="font-size: 2em; color: #f59e0b;"></i>
+                            <div class="sensor-value" id="gasValue">--</div>
+                            <div class="sensor-label">Nồng độ khí gas (ppm)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bedroom -->
+                <div class="room-card">
+                    <div class="room-header">
+                        <div class="room-title">
+                            <div class="room-icon">
+                                <i class="fas fa-bed"></i>
+                            </div>
+                            <span>Phòng Ngủ</span>
+                        </div>
+                    </div>
+                    <div class="room-controls">
+                        <button class="control-button" id="light2Btn" onclick="toggleDevice('light2')">
+                            <i class="fas fa-lightbulb control-icon"></i>
+                            <span>Đèn</span>
+                        </button>
+                        <button class="control-button" id="fan2Btn" onclick="toggleDevice('fan2')">
+                            <i class="fas fa-fan control-icon"></i>
+                            <span>Quạt</span>
+                        </button>
+                    </div>
+                    <div class="sensor-grid">
+                        <div class="sensor-item" style="grid-column: span 2;">
+                            <i class="fas fa-sun" style="font-size: 2em; color: #fbbf24;"></i>
+                            <div class="sensor-value" id="lightStatus">Sáng</div>
+                            <div class="sensor-label">Trạng thái ánh sáng</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Controls -->
+                <div class="room-card">
+                    <div class="room-header">
+                        <div class="room-title">
+                            <div class="room-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <span>Điều Khiển Khác</span>
+                        </div>
+                    </div>
+                    <div class="room-controls">
+                        <button class="control-button" id="light4Btn" onclick="toggleDevice('light4')">
+                            <i class="fas fa-warehouse control-icon"></i>
+                            <span>Đèn Garage</span>
+                        </button>
+                        <button class="control-button" id="autoLightBtn" onclick="toggleDevice('autoLight')">
+                            <i class="fas fa-magic control-icon"></i>
+                            <span>Đèn Tự Động</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <!-- Temperature & Humidity Chart -->
+            <div class="glass-card chart-card">
+                <h3><i class="fas fa-chart-line"></i> Biểu Đồ Nhiệt Độ & Độ Ẩm</h3>
+                <canvas id="tempHumidChart" class="chart-canvas"></canvas>
+            </div>
+            
+            <!-- Gas Level Chart -->
+            <div class="glass-card chart-card">
+                <h3><i class="fas fa-chart-area"></i> Biểu Đồ Nồng Độ Khí Gas</h3>
+                <canvas id="gasChart" class="chart-canvas"></canvas>
+            </div>
+            
+            <!-- Energy Usage Chart -->
+            <div class="glass-card chart-card">
+                <h3><i class="fas fa-chart-bar"></i> Biểu Đồ Sử Dụng Năng Lượng</h3>
+                <canvas id="energyChart" class="chart-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.unpkg.com/@eohjsc/era-widget@1.1.3/src/index.js"></script>
+    <script>
+        // Global Variables
+        let eraWidget;
+        let energyFlowAnimation;
+        let charts = {};
+        let deviceStates = {
+            light1: false, light2: false, light3: false, light4: false,
+            fan1: false, fan2: false, fan3: false, autoLight: false
+        };
+        let sensorData = {
+            temp: [], humid: [], gas: [], timestamps: []
+        };
+        let energyData = {
+            solar: [], battery: [], adapter: [], timestamps: []
+        };
+        let currentPowerSource = 0;
+        let configs = {};
+        let actions = {};
+        
+        // Initialize Particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Update DateTime
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('vi-VN');
+        }
+        
+        // Energy Flow Animation Class
+        class EnergyFlowVisualization {
+            constructor(canvasId) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.nodes = {
+                    solar: { x: 0.2, y: 0.2, name: 'Mặt Trời', color: '#f59e0b', power: 0 },
+                    battery: { x: 0.8, y: 0.2, name: 'Pin LiPo', color: '#10b981', power: 0 },
+                    adapter: { x: 0.2, y: 0.8, name: 'Adapter', color: '#ef4444', power: 0 },
+                    home: { x: 0.5, y: 0.5, name: 'Nhà', color: '#3b82f6', power: 0 }
+                };
+                this.particles = [];
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+            
+            resize() {
+                const rect = this.canvas.parentElement.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+            
+            drawNode(node) {
+                const x = node.x * this.canvas.width;
+                const y = node.y * this.canvas.height;
+                const radius = 40;
+                
+                // Glow effect
+                const gradient = this.ctx.createRadialGradient(x, y, 0, x, y, radius * 2);
+                gradient.addColorStop(0, node.color + '40');
+                gradient.addColorStop(1, 'transparent');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(x - radius * 2, y - radius * 2, radius * 4, radius * 4);
+                
+                // Node circle
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+                this.ctx.fillStyle = node.color;
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+                
+                // Text
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 14px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(node.name, x, y - 5);
+                this.ctx.font = '12px Arial';
+                this.ctx.fillText(node.power + ' W', x, y + 10);
+            }
+            
+            drawConnection(from, to, active) {
+                if (!active) return;
+                
+                const x1 = from.x * this.canvas.width;
+                const y1 = from.y * this.canvas.height;
+                const x2 = to.x * this.canvas.width;
+                const y2 = to.y * this.canvas.height;
+                
+                // Draw line
+                this.ctx.beginPath();
+                this.ctx.moveTo(x1, y1);
+                this.ctx.lineTo(x2, y2);
+                this.ctx.strokeStyle = from.color + '80';
+                this.ctx.lineWidth = 3;
+                this.ctx.setLineDash([10, 5]);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                // Create particles
+                const speed = Math.min(from.power / 100, 5); // Speed based on power
+                const particleCount = Math.ceil(from.power / 50); // More particles for more power
+                
+                for (let i = 0; i < particleCount; i++) {
+                    if (Math.random() < 0.1) { // 10% chance to create new particle
+                        this.particles.push({
+                            x: x1,
+                            y: y1,
+                            targetX: x2,
+                            targetY: y2,
+                            progress: i * (1 / particleCount),
+                            speed: speed / 100,
+                            color: from.color,
+                            size: 4 + Math.random() * 4
+                        });
+                    }
+                }
+            }
+            
+            updateParticles() {
+                this.particles = this.particles.filter(particle => {
+                    particle.progress += particle.speed;
+                    
+                    if (particle.progress >= 1) {
+                        return false; // Remove particle
+                    }
+                    
+                    // Calculate position
+                    particle.x = particle.x + (particle.targetX - particle.x) * particle.speed;
+                    particle.y = particle.y + (particle.targetY - particle.y) * particle.speed;
+                    
+                    // Draw particle
+                    const gradient = this.ctx.createRadialGradient(
+                        particle.x, particle.y, 0,
+                        particle.x, particle.y, particle.size
+                    );
+                    gradient.addColorStop(0, particle.color);
+                    gradient.addColorStop(1, 'transparent');
+                    
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    return true;
+                });
+            }
+            
+            update(powerSource, powers) {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Update power values
+                this.nodes.solar.power = powers.solar || 0;
+                this.nodes.battery.power = powers.battery || 0;
+                this.nodes.adapter.power = powers.adapter || 0;
+                this.nodes.home.power = powers.total || 0;
+                
+                // Draw connections based on power source
+                if (powerSource === 1) {
+                    this.drawConnection(this.nodes.solar, this.nodes.home, true);
+                } else if (powerSource === 2) {
+                    this.drawConnection(this.nodes.battery, this.nodes.home, true);
+                } else if (powerSource === 3) {
+                    this.drawConnection(this.nodes.adapter, this.nodes.home, true);
+                }
+                
+                // Draw secondary connections (charging paths)
+                if (this.nodes.solar.power > 0 && powerSource !== 1) {
+                    this.drawConnection(this.nodes.solar, this.nodes.battery, true);
+                }
+                
+                // Update particles
+                this.updateParticles();
+                
+                // Draw nodes
+                Object.values(this.nodes).forEach(node => this.drawNode(node));
+            }
+        }
+        
+        // Initialize Charts
+        function initializeCharts() {
+            // Temperature & Humidity Chart
+            const tempHumidCtx = document.getElementById('tempHumidChart').getContext('2d');
+            charts.tempHumid = new Chart(tempHumidCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nhiệt độ (°C)',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: '#ef444420',
+                        yAxisID: 'y',
+                        tension: 0.4
+                    }, {
+                        label: 'Độ ẩm (%)',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: '#3b82f620',
+                        yAxisID: 'y1',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            ticks: { color: '#ef4444' },
+                            grid: { color: '#ffffff20' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            ticks: { color: '#3b82f6' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+            
+            // Gas Chart
+            const gasCtx = document.getElementById('gasChart').getContext('2d');
+            charts.gas = new Chart(gasCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Nồng độ khí gas (ppm)',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: '#f59e0b20',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        },
+                        y: {
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        }
+                    }
+                }
+            });
+            
+            // Energy Chart
+            const energyCtx = document.getElementById('energyChart').getContext('2d');
+            charts.energy = new Chart(energyCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Mặt Trời (W)',
+                        data: [],
+                        backgroundColor: '#f59e0b80',
+                        borderColor: '#f59e0b',
+                        borderWidth: 2
+                    }, {
+                        label: 'Pin LiPo (W)',
+                        data: [],
+                        backgroundColor: '#10b98180',
+                        borderColor: '#10b981',
+                        borderWidth: 2
+                    }, {
+                        label: 'Adapter (W)',
+                        data: [],
+                        backgroundColor: '#ef444480',
+                        borderColor: '#ef4444',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update Chart Data
+        function updateChartData() {
+            const maxDataPoints = 20;
+            const currentTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            
+            // Add timestamp
+            sensorData.timestamps.push(currentTime);
+            energyData.timestamps.push(currentTime);
+            
+            // Limit data points
+            if (sensorData.timestamps.length > maxDataPoints) {
+                sensorData.timestamps.shift();
+                sensorData.temp.shift();
+                sensorData.humid.shift();
+                sensorData.gas.shift();
+            }
+            
+            if (energyData.timestamps.length > maxDataPoints) {
+                energyData.timestamps.shift();
+                energyData.solar.shift();
+                energyData.battery.shift();
+                energyData.adapter.shift();
+            }
+            
+            // Update Temperature & Humidity Chart
+            charts.tempHumid.data.labels = sensorData.timestamps;
+            charts.tempHumid.data.datasets[0].data = sensorData.temp;
+            charts.tempHumid.data.datasets[1].data = sensorData.humid;
+            charts.tempHumid.update('none');
+            
+            // Update Gas Chart
+            charts.gas.data.labels = sensorData.timestamps;
+            charts.gas.data.datasets[0].data = sensorData.gas;
+            charts.gas.update('none');
+            
+            // Update Energy Chart
+            charts.energy.data.labels = energyData.timestamps;
+            charts.energy.data.datasets[0].data = energyData.solar;
+            charts.energy.data.datasets[1].data = energyData.battery;
+            charts.energy.data.datasets[2].data = energyData.adapter;
+            charts.energy.update('none');
+        }
+        
+        // Show Notification
+        function showNotification(title, message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            const notificationIcon = notification.querySelector('.notification-icon');
+            
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            // Set icon and color based on type
+            const iconClass = {
+                'info': 'fa-info-circle',
+                'success': 'fa-check-circle',
+                'warning': 'fa-exclamation-triangle',
+                'error': 'fa-times-circle'
+            };
+            
+            const iconColor = {
+                'info': '#3b82f6',
+                'success': '#10b981',
+                'warning': '#f59e0b',
+                'error': '#ef4444'
+            };
+            
+            notificationIcon.innerHTML = `<i class="fas ${iconClass[type]}" style="color: ${iconColor[type]}"></i>`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Toggle Device
+        function toggleDevice(device) {
+            const newState = !deviceStates[device];
+            const actionName = device + (newState ? 'On' : 'Off');
+            
+            if (actions[actionName]) {
+                eraWidget.triggerAction(actions[actionName].action, null);
+                showNotification('Điều khiển thiết bị', 
+                    `${device.replace(/(\d+)/, ' $1')} đã được ${newState ? 'bật' : 'tắt'}`, 
+                    'success');
+            }
+        }
+        
+        // Update Device State UI
+        function updateDeviceState(device, value) {
+            if (value !== undefined) {
+                deviceStates[device] = value;
+                const btn = document.getElementById(device + 'Btn');
+                if (btn) {
+                    if (value) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            }
+        }
+        
+        // Calculate Energy Percentages
+        function calculateEnergyPercentages(solar, battery, adapter) {
+            const total = solar + battery + adapter;
+            if (total === 0) {
+                return { solar: 0, battery: 0, adapter: 0 };
+            }
+            
+            return {
+                solar: Math.round((solar / total) * 100),
+                battery: Math.round((battery / total) * 100),
+                adapter: Math.round((adapter / total) * 100)
+            };
+        }
+        
+        // Update Weather
+        async function updateWeather() {
+            try {
+                // Using mock data since API key is not provided
+                const mockWeatherData = {
+                    temp: 28 + Math.random() * 5,
+                    humidity: 60 + Math.random() * 20,
+                    wind: 5 + Math.random() * 10,
+                    rain: Math.random() * 2,
+                    visibility: 8 + Math.random() * 2,
+                    description: 'Trời nắng nhẹ',
+                    icon: 'fa-sun'
+                };
+                
+                document.getElementById('weatherTemp').textContent = Math.round(mockWeatherData.temp) + '°C';
+                document.getElementById('weatherDesc').textContent = mockWeatherData.description;
+                document.getElementById('weatherHumidity').textContent = Math.round(mockWeatherData.humidity) + '%';
+                document.getElementById('weatherWind').textContent = mockWeatherData.wind.toFixed(1) + ' km/h';
+                document.getElementById('weatherRain').textContent = mockWeatherData.rain.toFixed(1) + ' mm';
+                document.getElementById('weatherVisibility').textContent = mockWeatherData.visibility.toFixed(1) + ' km';
+                document.getElementById('weatherIcon').innerHTML = `<i class="fas ${mockWeatherData.icon}"></i>`;
+            } catch (error) {
+                console.error('Error updating weather:', error);
+            }
+        }
+        
+        // Initialize ERA Widget
+        function initializeERA() {
+            eraWidget = new EraWidget();
+            
+            eraWidget.init({
+                onConfiguration: (configuration) => {
+                    // Map configurations
+                    configs = {
+                        temp: configuration.realtime_configs[0],
+                        humid: configuration.realtime_configs[1],
+                        gas: configuration.realtime_configs[2],
+                        lightSensor: configuration.realtime_configs[3],
+                        solarV: configuration.realtime_configs[4],
+                        solarI: configuration.realtime_configs[5],
+                        solarP: configuration.realtime_configs[6],
+                        batteryV: configuration.realtime_configs[7],
+                        batteryI: configuration.realtime_configs[8],
+                        batteryP: configuration.realtime_configs[9],
+                        adapterV: configuration.realtime_configs[10],
+                        adapterI: configuration.realtime_configs[11],
+                        adapterP: configuration.realtime_configs[12],
+                        fan1: configuration.realtime_configs[13],
+                        fan2: configuration.realtime_configs[14],
+                        fan3: configuration.realtime_configs[15],
+                        light1: configuration.realtime_configs[16],
+                        light2: configuration.realtime_configs[17],
+                        light3: configuration.realtime_configs[18],
+                        light4: configuration.realtime_configs[19],
+                        autoLight: configuration.realtime_configs[20],
+                        powerSource: configuration.realtime_configs[21],
+                        totalPower: configuration.realtime_configs[22]
+                    };
+                    
+                    // Map actions
+                    actions = {
+                        light1On: configuration.actions[0],
+                        light1Off: configuration.actions[1],
+                        light2On: configuration.actions[2],
+                        light2Off: configuration.actions[3],
+                        light3On: configuration.actions[4],
+                        light3Off: configuration.actions[5],
+                        light4On: configuration.actions[6],
+                        light4Off: configuration.actions[7],
+                        fan1On: configuration.actions[8],
+                        fan1Off: configuration.actions[9],
+                        fan2On: configuration.actions[10],
+                        fan2Off: configuration.actions[11],
+                        fan3On: configuration.actions[12],
+                        fan3Off: configuration.actions[13],
+                        autoLightOn: configuration.actions[14],
+                        autoLightOff: configuration.actions[15]
+                    };
+                    
+                    // Hide loading overlay
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                },
+                
+                onValues: (values) => {
+                    // Update sensor values
+                    if (configs.temp && values[configs.temp.id]) {
+                        const tempValue = values[configs.temp.id].value;
+                        document.getElementById('tempValue').textContent = tempValue.toFixed(1);
+                        sensorData.temp.push(tempValue);
+                    }
+                    
+                    if (configs.humid && values[configs.humid.id]) {
+                        const humidValue = values[configs.humid.id].value;
+                        document.getElementById('humidValue').textContent = humidValue.toFixed(1);
+                        sensorData.humid.push(humidValue);
+                    }
+                    
+                    if (configs.gas && values[configs.gas.id]) {
+                        const gasValue = values[configs.gas.id].value;
+                        document.getElementById('gasValue').textContent = gasValue;
+                        sensorData.gas.push(gasValue);
+                        
+                        // Check gas level warning
+                        if (gasValue > 1000) {
+                            showNotification('Cảnh báo', 'Nồng độ khí gas cao!', 'warning');
+                        }
+                    }
+                    
+                    if (configs.lightSensor && values[configs.lightSensor.id]) {
+                        const lightValue = values[configs.lightSensor.id].value;
+                        document.getElementById('lightStatus').textContent = lightValue ? 'Tối' : 'Sáng';
+                    }
+                    
+                    // Update power values
+                    let solarPower = 0, batteryPower = 0, adapterPower = 0, totalPower = 0;
+                    
+                    if (configs.solarP && values[configs.solarP.id]) {
+                        solarPower = values[configs.solarP.id].value;
+                        energyData.solar.push(solarPower);
+                    }
+                    
+                    if (configs.batteryP && values[configs.batteryP.id]) {
+                        batteryPower = values[configs.batteryP.id].value;
+                        energyData.battery.push(batteryPower);
+                    }
+                    
+                    if (configs.adapterP && values[configs.adapterP.id]) {
+                        adapterPower = values[configs.adapterP.id].value;
+                        energyData.adapter.push(adapterPower);
+                    }
+                    
+                    if (configs.totalPower && values[configs.totalPower.id]) {
+                        totalPower = values[configs.totalPower.id].value;
+                    }
+                    
+                    // Update energy percentages
+                    const percentages = calculateEnergyPercentages(solarPower, batteryPower, adapterPower);
+                    document.getElementById('solarPercent').textContent = percentages.solar + '%';
+                    document.getElementById('batteryPercent').textContent = percentages.battery + '%';
+                    document.getElementById('adapterPercent').textContent = percentages.adapter + '%';
+                    
+                    // Update power source
+                    if (configs.powerSource && values[configs.powerSource.id]) {
+                        currentPowerSource = values[configs.powerSource.id].value;
+                    }
+                    
+                    // Update energy flow visualization
+                    if (energyFlowAnimation) {
+                        energyFlowAnimation.update(currentPowerSource, {
+                            solar: solarPower,
+                            battery: batteryPower,
+                            adapter: adapterPower,
+                            total: totalPower
+                        });
+                    }
+                    
+                    // Update device states
+                    updateDeviceState('light1', values[configs.light1.id]?.value);
+                    updateDeviceState('light2', values[configs.light2.id]?.value);
+                    updateDeviceState('light3', values[configs.light3.id]?.value);
+                    updateDeviceState('light4', values[configs.light4.id]?.value);
+                    updateDeviceState('fan1', values[configs.fan1.id]?.value);
+                    updateDeviceState('fan2', values[configs.fan2.id]?.value);
+                    updateDeviceState('fan3', values[configs.fan3.id]?.value);
+                    updateDeviceState('autoLight', values[configs.autoLight.id]?.value);
+                    
+                    // Update charts
+                    updateChartData();
+                }
+            });
+        }
+        
+        // Animation Loop
+        function animate() {
+            if (energyFlowAnimation) {
+                energyFlowAnimation.update(currentPowerSource, {
+                    solar: energyData.solar[energyData.solar.length - 1] || 0,
+                    battery: energyData.battery[energyData.battery.length - 1] || 0,
+                    adapter: energyData.adapter[energyData.adapter.length - 1] || 0,
+                    total: (energyData.solar[energyData.solar.length - 1] || 0) + 
+                           (energyData.battery[energyData.battery.length - 1] || 0) + 
+                           (energyData.adapter[energyData.adapter.length - 1] || 0)
+                });
+            }
+            requestAnimationFrame(animate);
+        }
+        
+        // Initialize Everything
+        window.addEventListener('DOMContentLoaded', () => {
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            // Create particles
+            createParticles();
+            
+            // Initialize datetime
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Initialize energy flow visualization
+            energyFlowAnimation = new EnergyFlowVisualization('energyCanvas');
+            
+            // Initialize ERA widget
+            initializeERA();
+            
+            // Update weather
+            updateWeather();
+            setInterval(updateWeather, 600000); // Update every 10 minutes
+            
+            // Start animation loop
+            animate();
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification('Chào mừng', 'Hệ thống Smart Home đã sẵn sàng!', 'success');
+            }, 2000);
+        });
+        
+        // Handle visibility change to pause/resume animations
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Pause animations when page is hidden
+                console.log('Page hidden, pausing animations');
+            } else {
+                // Resume animations when page is visible
+                console.log('Page visible, resuming animations');
+            }
+        });
+    </script>
+</body>
+</html>
