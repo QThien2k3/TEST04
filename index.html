@@ -355,6 +355,13 @@
             text-align: center;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .sensor-item.highlight {
+            background: rgba(251, 191, 36, 0.2);
+            border: 1px solid var(--warning-color);
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
         }
         
         .sensor-value {
@@ -362,11 +369,43 @@
             font-weight: 700;
             color: var(--success-color);
             margin: 10px 0;
+            transition: all 0.3s ease;
         }
         
         .sensor-label {
             opacity: 0.8;
             font-size: 0.9em;
+        }
+        
+        /* Light Sensor Specific Styles */
+        .light-sensor-item {
+            grid-column: span 2;
+            position: relative;
+        }
+        
+        .light-sensor-item .sensor-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            transition: all 0.5s ease;
+        }
+        
+        .light-sensor-item.dark {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            border: 1px solid #6366f1;
+        }
+        
+        .light-sensor-item.light {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+            border: 1px solid #fbbf24;
+        }
+        
+        .light-history {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.8em;
+            opacity: 0.7;
         }
         
         /* Charts Section */
@@ -724,10 +763,14 @@
                         </button>
                     </div>
                     <div class="sensor-grid">
-                        <div class="sensor-item" style="grid-column: span 2;">
-                            <i class="fas fa-sun" style="font-size: 2em; color: #fbbf24;"></i>
+                        <div class="sensor-item light-sensor-item" id="lightSensorDisplay">
+                            <i class="fas fa-sun sensor-icon" id="lightSensorIcon" style="color: #fbbf24;"></i>
                             <div class="sensor-value" id="lightStatus">Sáng</div>
                             <div class="sensor-label">Trạng thái ánh sáng</div>
+                            <div class="light-history">
+                                <span>Lần cuối thay đổi:</span>
+                                <span id="lightLastChanged">--:--</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -770,6 +813,12 @@
                 <canvas id="gasChart" class="chart-canvas"></canvas>
             </div>
             
+            <!-- Light Sensor Chart -->
+            <div class="glass-card chart-card">
+                <h3><i class="fas fa-chart-line"></i> Biểu Đồ Cảm Biến Ánh Sáng</h3>
+                <canvas id="lightChart" class="chart-canvas"></canvas>
+            </div>
+            
             <!-- Energy Usage Chart -->
             <div class="glass-card chart-card">
                 <h3><i class="fas fa-chart-bar"></i> Biểu Đồ Sử Dụng Năng Lượng</h3>
@@ -790,7 +839,7 @@
             fan1: false, fan2: false, fan3: false, autoLight: false
         };
         let sensorData = {
-            temp: [], humid: [], gas: [], timestamps: []
+            temp: [], humid: [], gas: [], light: [], timestamps: []
         };
         let energyData = {
             solar: [], battery: [], adapter: [], timestamps: []
@@ -798,6 +847,15 @@
         let currentPowerSource = 0;
         let configs = {};
         let actions = {};
+        
+        // Light Sensor Enhanced Variables
+        let lightSensorState = {
+            current: null,
+            previous: null,
+            lastChanged: null,
+            changeCount: 0,
+            history: []
+        };
         
         // Initialize Particles
         function createParticles() {
@@ -818,6 +876,76 @@
             const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', dateOptions);
             document.getElementById('currentTime').textContent = now.toLocaleTimeString('vi-VN');
+        }
+        
+        // Enhanced Light Sensor Logic
+        function updateLightSensorDisplay(lightValue) {
+            const isDark = lightValue === 1; // HIGH = tối theo code Arduino
+            const currentTime = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+            
+            // Cập nhật trạng thái
+            lightSensorState.previous = lightSensorState.current;
+            lightSensorState.current = isDark;
+            
+            // Kiểm tra thay đổi trạng thái
+            if (lightSensorState.previous !== null && lightSensorState.previous !== lightSensorState.current) {
+                lightSensorState.lastChanged = currentTime;
+                lightSensorState.changeCount++;
+                
+                // Thêm vào lịch sử
+                lightSensorState.history.push({
+                    state: isDark ? 'Tối' : 'Sáng',
+                    time: currentTime,
+                    timestamp: new Date()
+                });
+                
+                // Giới hạn lịch sử (giữ 50 records cuối)
+                if (lightSensorState.history.length > 50) {
+                    lightSensorState.history.shift();
+                }
+                
+                // Hiển thị thông báo
+                const message = isDark ? 
+                    'Trời đã tối, đèn tự động sẽ được kích hoạt' : 
+                    'Trời đã sáng, đèn tự động sẽ được tắt';
+                showNotification('Thay đổi ánh sáng', message, 'info');
+                
+                // Hiệu ứng highlight
+                const sensorDisplay = document.getElementById('lightSensorDisplay');
+                sensorDisplay.classList.add('highlight');
+                setTimeout(() => {
+                    sensorDisplay.classList.remove('highlight');
+                }, 2000);
+            }
+            
+            // Cập nhật UI
+            const statusElement = document.getElementById('lightStatus');
+            const iconElement = document.getElementById('lightSensorIcon');
+            const sensorDisplay = document.getElementById('lightSensorDisplay');
+            const lastChangedElement = document.getElementById('lightLastChanged');
+            
+            // Cập nhật text và icon
+            statusElement.textContent = isDark ? 'Tối' : 'Sáng';
+            iconElement.className = isDark ? 'fas fa-moon sensor-icon' : 'fas fa-sun sensor-icon';
+            iconElement.style.color = isDark ? '#6366f1' : '#fbbf24';
+            
+            // Cập nhật background class
+            sensorDisplay.classList.remove('dark', 'light');
+            sensorDisplay.classList.add(isDark ? 'dark' : 'light');
+            
+            // Cập nhật thời gian thay đổi cuối
+            if (lightSensorState.lastChanged) {
+                lastChangedElement.textContent = lightSensorState.lastChanged;
+            }
+            
+            // Thêm vào dữ liệu biểu đồ
+            sensorData.light.push(isDark ? 1 : 0);
+            
+            // Giới hạn dữ liệu biểu đồ
+            const maxDataPoints = 20;
+            if (sensorData.light.length > maxDataPoints) {
+                sensorData.light.shift();
+            }
         }
         
         // Energy Flow Animation Class
@@ -891,11 +1019,11 @@
                 this.ctx.setLineDash([]);
                 
                 // Create particles
-                const speed = Math.min(from.power / 100, 5); // Speed based on power
-                const particleCount = Math.ceil(from.power / 50); // More particles for more power
+                const speed = Math.min(from.power / 100, 5);
+                const particleCount = Math.ceil(from.power / 50);
                 
                 for (let i = 0; i < particleCount; i++) {
-                    if (Math.random() < 0.1) { // 10% chance to create new particle
+                    if (Math.random() < 0.1) {
                         this.particles.push({
                             x: x1,
                             y: y1,
@@ -915,14 +1043,12 @@
                     particle.progress += particle.speed;
                     
                     if (particle.progress >= 1) {
-                        return false; // Remove particle
+                        return false;
                     }
                     
-                    // Calculate position
                     particle.x = particle.x + (particle.targetX - particle.x) * particle.speed;
                     particle.y = particle.y + (particle.targetY - particle.y) * particle.speed;
                     
-                    // Draw particle
                     const gradient = this.ctx.createRadialGradient(
                         particle.x, particle.y, 0,
                         particle.x, particle.y, particle.size
@@ -940,16 +1066,13 @@
             }
             
             update(powerSource, powers) {
-                // Clear canvas
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 
-                // Update power values
                 this.nodes.solar.power = powers.solar || 0;
                 this.nodes.battery.power = powers.battery || 0;
                 this.nodes.adapter.power = powers.adapter || 0;
                 this.nodes.home.power = powers.total || 0;
                 
-                // Draw connections based on power source
                 if (powerSource === 1) {
                     this.drawConnection(this.nodes.solar, this.nodes.home, true);
                 } else if (powerSource === 2) {
@@ -958,15 +1081,11 @@
                     this.drawConnection(this.nodes.adapter, this.nodes.home, true);
                 }
                 
-                // Draw secondary connections (charging paths)
                 if (this.nodes.solar.power > 0 && powerSource !== 1) {
                     this.drawConnection(this.nodes.solar, this.nodes.battery, true);
                 }
                 
-                // Update particles
                 this.updateParticles();
-                
-                // Draw nodes
                 Object.values(this.nodes).forEach(node => this.drawNode(node));
             }
         }
@@ -1066,6 +1185,51 @@
                 }
             });
             
+            // Light Sensor Chart - MỚI
+            const lightCtx = document.getElementById('lightChart').getContext('2d');
+            charts.light = new Chart(lightCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Trạng thái ánh sáng',
+                        data: [],
+                        borderColor: '#fbbf24',
+                        backgroundColor: '#fbbf2420',
+                        fill: true,
+                        stepped: true, // Hiển thị dạng bậc thang cho digital signal
+                        tension: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#fff' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { color: '#ffffff20' }
+                        },
+                        y: {
+                            min: 0,
+                            max: 1,
+                            ticks: { 
+                                color: '#fff',
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value === 1 ? 'Tối' : 'Sáng';
+                                }
+                            },
+                            grid: { color: '#ffffff20' }
+                        }
+                    }
+                }
+            });
+            
             // Energy Chart
             const energyCtx = document.getElementById('energyChart').getContext('2d');
             charts.energy = new Chart(energyCtx, {
@@ -1131,6 +1295,7 @@
                 sensorData.temp.shift();
                 sensorData.humid.shift();
                 sensorData.gas.shift();
+                sensorData.light.shift();
             }
             
             if (energyData.timestamps.length > maxDataPoints) {
@@ -1151,6 +1316,11 @@
             charts.gas.data.datasets[0].data = sensorData.gas;
             charts.gas.update('none');
             
+            // Update Light Chart - MỚI
+            charts.light.data.labels = sensorData.timestamps;
+            charts.light.data.datasets[0].data = sensorData.light;
+            charts.light.update('none');
+            
             // Update Energy Chart
             charts.energy.data.labels = energyData.timestamps;
             charts.energy.data.datasets[0].data = energyData.solar;
@@ -1169,7 +1339,6 @@
             notificationTitle.textContent = title;
             notificationMessage.textContent = message;
             
-            // Set icon and color based on type
             const iconClass = {
                 'info': 'fa-info-circle',
                 'success': 'fa-check-circle',
@@ -1237,7 +1406,6 @@
         // Update Weather
         async function updateWeather() {
             try {
-                // Using mock data since API key is not provided
                 const mockWeatherData = {
                     temp: 28 + Math.random() * 5,
                     humidity: 60 + Math.random() * 20,
@@ -1266,7 +1434,6 @@
             
             eraWidget.init({
                 onConfiguration: (configuration) => {
-                    // Map configurations
                     configs = {
                         temp: configuration.realtime_configs[0],
                         humid: configuration.realtime_configs[1],
@@ -1293,7 +1460,6 @@
                         totalPower: configuration.realtime_configs[22]
                     };
                     
-                    // Map actions
                     actions = {
                         light1On: configuration.actions[0],
                         light1Off: configuration.actions[1],
@@ -1313,7 +1479,6 @@
                         autoLightOff: configuration.actions[15]
                     };
                     
-                    // Hide loading overlay
                     document.getElementById('loadingOverlay').classList.remove('active');
                 },
                 
@@ -1336,15 +1501,15 @@
                         document.getElementById('gasValue').textContent = gasValue;
                         sensorData.gas.push(gasValue);
                         
-                        // Check gas level warning
                         if (gasValue > 1000) {
                             showNotification('Cảnh báo', 'Nồng độ khí gas cao!', 'warning');
                         }
                     }
                     
+                    // Enhanced Light Sensor Processing
                     if (configs.lightSensor && values[configs.lightSensor.id]) {
                         const lightValue = values[configs.lightSensor.id].value;
-                        document.getElementById('lightStatus').textContent = lightValue ? 'Tối' : 'Sáng';
+                        updateLightSensorDisplay(lightValue);
                     }
                     
                     // Update power values
@@ -1421,6 +1586,112 @@
             requestAnimationFrame(animate);
         }
         
+        // Light Sensor Statistics Function
+        function getLightSensorStats() {
+            const now = new Date();
+            const today = now.toDateString();
+            
+            // Lọc dữ liệu hôm nay
+            const todayHistory = lightSensorState.history.filter(record => 
+                record.timestamp.toDateString() === today
+            );
+            
+            // Tính toán thống kê
+            const darkPeriods = [];
+            const lightPeriods = [];
+            
+            for (let i = 0; i < todayHistory.length; i++) {
+                const current = todayHistory[i];
+                const next = todayHistory[i + 1];
+                
+                if (current.state === 'Tối') {
+                    const endTime = next ? next.timestamp : now;
+                    const duration = (endTime - current.timestamp) / (1000 * 60); // phút
+                    darkPeriods.push({
+                        start: current.time,
+                        duration: duration
+                    });
+                } else {
+                    const endTime = next ? next.timestamp : now;
+                    const duration = (endTime - current.timestamp) / (1000 * 60); // phút
+                    lightPeriods.push({
+                        start: current.time,
+                        duration: duration
+                    });
+                }
+            }
+            
+            return {
+                totalChanges: todayHistory.length,
+                darkPeriods: darkPeriods,
+                lightPeriods: lightPeriods,
+                currentState: lightSensorState.current ? 'Tối' : 'Sáng',
+                lastChanged: lightSensorState.lastChanged || 'Chưa có'
+            };
+        }
+        
+        // Auto Light Logic Enhancement
+        function checkAutoLightLogic() {
+            // Kiểm tra logic đèn tự động dựa trên:
+            // 1. Trạng thái cảm biến ánh sáng
+            // 2. Trạng thái bật/tắt của chế độ auto
+            // 3. Thời gian trong ngày
+            
+            const now = new Date();
+            const hour = now.getHours();
+            const isDark = lightSensorState.current === true;
+            const isAutoLightEnabled = deviceStates.autoLight;
+            
+            // Logic nâng cao: chỉ bật đèn tự động vào buổi tối (18h-6h)
+            const isNightTime = hour >= 18 || hour <= 6;
+            
+            if (isAutoLightEnabled && isDark && isNightTime) {
+                showNotification('Đèn tự động', 
+                    'Đèn tự động được kích hoạt do trời tối và đã đến giờ tối', 
+                    'info');
+            } else if (isAutoLightEnabled && !isDark && !isNightTime) {
+                showNotification('Đèn tự động', 
+                    'Đèn tự động được tắt do trời sáng hoặc không phải giờ tối', 
+                    'info');
+            }
+            
+            return {
+                shouldActivate: isAutoLightEnabled && isDark && isNightTime,
+                reason: `Auto: ${isAutoLightEnabled}, Tối: ${isDark}, Giờ tối: ${isNightTime}`
+            };
+        }
+        
+        // Enhanced Light Sensor Debug Info
+        function showLightSensorDebugInfo() {
+            const stats = getLightSensorStats();
+            const autoLogic = checkAutoLightLogic();
+            
+            console.log('=== LIGHT SENSOR DEBUG INFO ===');
+            console.log('Current State:', stats.currentState);
+            console.log('Last Changed:', stats.lastChanged);
+            console.log('Total Changes Today:', stats.totalChanges);
+            console.log('Dark Periods:', stats.darkPeriods.length);
+            console.log('Light Periods:', stats.lightPeriods.length);
+            console.log('Auto Light Logic:', autoLogic);
+            console.log('===============================');
+        }
+        
+        // Periodic Light Sensor Check
+        function periodicLightSensorCheck() {
+            // Chạy mỗi 30 giây để kiểm tra và debug
+            setInterval(() => {
+                if (lightSensorState.current !== null) {
+                    checkAutoLightLogic();
+                    
+                    // Debug mỗi 5 phút
+                    const now = new Date();
+                    if (now.getMinutes() % 5 === 0 && now.getSeconds() === 0) {
+                        showLightSensorDebugInfo();
+                    }
+                }
+            }, 30000);
+        }
+        
         // Initialize Everything
         window.addEventListener('DOMContentLoaded', () => {
             // Show loading overlay
@@ -1449,22 +1720,72 @@
             // Start animation loop
             animate();
             
+            // Start periodic light sensor check
+            periodicLightSensorCheck();
+            
             // Show welcome notification
             setTimeout(() => {
                 showNotification('Chào mừng', 'Hệ thống Smart Home đã sẵn sàng!', 'success');
             }, 2000);
+            
+            // Demo light sensor changes (for testing)
+            if (window.location.search.includes('demo=true')) {
+                setTimeout(() => {
+                    console.log('Demo mode: Simulating light sensor changes');
+                    let demoState = 0;
+                    setInterval(() => {
+                        updateLightSensorDisplay(demoState);
+                        demoState = demoState === 0 ? 1 : 0;
+                    }, 10000); // Change every 10 seconds
+                }, 5000);
+            }
         });
         
         // Handle visibility change to pause/resume animations
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                // Pause animations when page is hidden
                 console.log('Page hidden, pausing animations');
             } else {
-                // Resume animations when page is visible
                 console.log('Page visible, resuming animations');
             }
         });
+        
+        // Keyboard shortcuts for testing
+        document.addEventListener('keydown', (e) => {
+            // Press 'L' to toggle light sensor demo
+            if (e.key === 'l' || e.key === 'L') {
+                const currentState = lightSensorState.current === null ? 0 : (lightSensorState.current ? 0 : 1);
+                updateLightSensorDisplay(currentState);
+                showNotification('Test', 'Đã thay đổi trạng thái cảm biến ánh sáng (demo)', 'info');
+            }
+            
+            // Press 'D' to show debug info
+            if (e.key === 'd' || e.key === 'D') {
+                showLightSensorDebugInfo();
+            }
+            
+            // Press 'S' to show light sensor stats
+            if (e.key === 's' || e.key === 'S') {
+                const stats = getLightSensorStats();
+                showNotification('Thống kê cảm biến ánh sáng', 
+                    `Hôm nay: ${stats.totalChanges} lần thay đổi, hiện tại: ${stats.currentState}`, 
+                    'info');
+            }
+        });
+        
+        // Export functions for debugging (development only)
+        window.debugLightSensor = {
+            getStats: getLightSensorStats,
+            showDebugInfo: showLightSensorDebugInfo,
+            checkAutoLogic: checkAutoLightLogic,
+            simulateChange: (state) => updateLightSensorDisplay(state),
+            getHistory: () => lightSensorState.history,
+            getCurrentState: () => lightSensorState
+        };
+        
+        console.log('Smart Home Dashboard loaded successfully!');
+        console.log('Debug commands available: window.debugLightSensor.*');
+        console.log('Keyboard shortcuts: L (toggle demo), D (debug), S (stats)');
     </script>
 </body>
 </html>
